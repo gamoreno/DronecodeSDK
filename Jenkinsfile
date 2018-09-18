@@ -9,18 +9,20 @@ pipeline {
               image 'dronecode/dronecode-sdk-ubuntu-16.04:2018-09-18'
             }
           }
-          stage('Build first') {
-            steps {
-              sh 'git submodule deinit -f .'
-              sh 'git clean -ff -x -d .'
-              sh 'git submodule update --init --recursive --force'
-              sh 'make BUILD_TYPE=Debug BUILD_BACKEND=1'
+          steps {
+            stage('Build first') {
+              steps {
+                sh 'git submodule deinit -f .'
+                sh 'git clean -ff -x -d .'
+                sh 'git submodule update --init --recursive --force'
+                sh 'make BUILD_TYPE=Debug BUILD_BACKEND=1'
+              }
             }
-          }
-          stage('Test second') {
-            steps {
-              sh 'build/default/unit_tests_runner'
-              sh 'build/default/backend/test/unit_tests_backend'
+            stage('Test second') {
+              steps {
+                sh 'build/default/unit_tests_runner'
+                sh 'build/default/backend/test/unit_tests_backend'
+              }
             }
           }
         }
