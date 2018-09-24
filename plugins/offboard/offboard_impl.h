@@ -30,6 +30,17 @@ public:
     void set_velocity_ned(Offboard::VelocityNEDYaw velocity_ned_yaw);
     void set_velocity_body(Offboard::VelocityBodyYawspeed velocity_body_yawspeed);
 
+    void stop_sending_setpoints();
+
+    void send_velocity_ned(const Offboard::VelocityNEDYaw &velocity_ned_yaw);
+
+    bool is_using_send_finish() const { return using_send_finish; }
+
+    void set_using_send_finish(bool using_send_finish_value)
+    {
+        using_send_finish = using_send_finish_value;
+    }
+
 private:
     void send_velocity_ned();
     void send_velocity_body();
@@ -40,8 +51,6 @@ private:
 
     static Offboard::Result offboard_result_from_command_result(MAVLinkCommands::Result result);
 
-    void stop_sending_setpoints();
-
     mutable std::mutex _mutex{};
     enum class Mode { NOT_ACTIVE, VELOCITY_NED, VELOCITY_BODY } _mode = Mode::NOT_ACTIVE;
     Offboard::VelocityNEDYaw _velocity_ned_yaw{};
@@ -49,6 +58,7 @@ private:
 
     void *_call_every_cookie = nullptr;
 
+    bool using_send_finish = false;
     const float SEND_INTERVAL_S = 0.1f;
 };
 

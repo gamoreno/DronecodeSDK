@@ -160,6 +160,14 @@ void OffboardImpl::set_velocity_body(Offboard::VelocityBodyYawspeed velocity_bod
     send_velocity_body();
 }
 
+void OffboardImpl::send_velocity_ned(const Offboard::VelocityNEDYaw &velocity_ned_yaw)
+{
+    _mutex.lock();
+    _velocity_ned_yaw = velocity_ned_yaw;
+    _mutex.unlock();
+    send_velocity_ned();
+}
+
 void OffboardImpl::send_velocity_ned()
 {
     const static uint16_t IGNORE_X = (1 << 0);

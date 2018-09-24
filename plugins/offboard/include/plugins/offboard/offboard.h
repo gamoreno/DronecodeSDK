@@ -162,6 +162,14 @@ public:
      */
     const Offboard &operator=(const Offboard &) = delete;
 
+    void stop_sending_setpoints();
+
+    void send_velocity_ned(const VelocityNEDYaw &velocity_ned_yaw);
+
+    bool is_using_send_finish() const;
+
+    void set_using_send_finish(bool using_send_finish_value);
+
 private:
     /** @private Underlying implementation, set at instantiation */
     std::unique_ptr<OffboardImpl> _impl;

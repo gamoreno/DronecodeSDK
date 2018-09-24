@@ -63,4 +63,24 @@ const char *Offboard::result_str(Result result)
     }
 }
 
+void Offboard::stop_sending_setpoints()
+{
+    _impl->stop_sending_setpoints();
+}
+
 } // namespace dronecode_sdk
+
+void dronecode_sdk::Offboard::send_velocity_ned(const VelocityNEDYaw &velocity_ned_yaw)
+{
+    _impl->send_velocity_ned(velocity_ned_yaw);
+}
+
+bool dronecode_sdk::Offboard::is_using_send_finish() const
+{
+    return _impl->is_using_send_finish();
+}
+
+void dronecode_sdk::Offboard::set_using_send_finish(bool using_send_finish_value)
+{
+    _impl->set_using_send_finish(using_send_finish_value);
+}
