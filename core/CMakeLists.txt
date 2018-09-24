@@ -63,6 +63,16 @@ if(ANDROID)
     )
 endif()
 
+set(ZSRMMT_ROOT_DIR "$ENV{ZSRMMT_ROOT_DIR}")
+if(ZSRMMT_ROOT_DIR)
+	message("Building with USE_MTSERIAL support")
+	add_definitions(-DUSE_MTSERIAL=1)
+
+	include_directories(${ZSRMMT_ROOT_DIR})
+	target_sources(dronecode_sdk PRIVATE mtserial_connection.cpp)
+	target_link_libraries(dronecode_sdk ${ZSRMMT_ROOT_DIR}/libzsv.a)
+endif()
+
 set_target_properties(dronecode_sdk
     PROPERTIES COMPILE_FLAGS ${warnings}
 )

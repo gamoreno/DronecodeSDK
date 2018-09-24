@@ -6,7 +6,7 @@ namespace dronecode_sdk {
 
 class CliArg {
 public:
-    enum class Protocol { NONE, UDP, TCP, SERIAL };
+    enum class Protocol { NONE, UDP, TCP, SERIAL, MTSERIAL };
 
     bool parse(const std::string &uri);
 

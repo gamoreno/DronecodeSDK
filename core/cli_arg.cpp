@@ -28,7 +28,7 @@ bool CliArg::parse(const std::string &uri)
         return false;
     }
 
-    if (_protocol == Protocol::SERIAL) {
+    if (_protocol == Protocol::SERIAL || _protocol == Protocol::MTSERIAL) {
         if (!find_baudrate(rest)) {
             return false;
         }
@@ -46,6 +46,7 @@ bool CliArg::find_protocol(std::string &rest)
     const std::string udp = "udp";
     const std::string tcp = "tcp";
     const std::string serial = "serial";
+    const std::string mtserial = "mtserial";
     const std::string delimiter = "://";
 
     if (rest.find(udp + delimiter) == 0) {
@@ -60,6 +61,12 @@ bool CliArg::find_protocol(std::string &rest)
         _protocol = Protocol::SERIAL;
         rest.erase(0, serial.length() + delimiter.length());
         return true;
+#if USE_MTSERIAL
+    } else if (rest.find(mtserial + delimiter) == 0) {
+        _protocol = Protocol::MTSERIAL;
+        rest.erase(0, mtserial.length() + delimiter.length());
+        return true;
+#endif
     } else {
         LogWarn() << "Unknown protocol";
         return false;
@@ -88,7 +95,7 @@ bool CliArg::find_path(std::string &rest)
         rest = "";
     }
 
-    if (_protocol == Protocol::SERIAL) {
+    if (_protocol == Protocol::SERIAL || _protocol == Protocol::MTSERIAL) {
         if (_path.find("/") == 0) {
             // A Linux/macOS path starting with '/' is ok.
             return true;

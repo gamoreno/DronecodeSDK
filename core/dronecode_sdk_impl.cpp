@@ -9,6 +9,7 @@
 #include "system.h"
 #include "system_impl.h"
 #include "serial_connection.h"
+#include "mtserial_connection.h"
 #include "cli_arg.h"
 #include "version.h"
 
@@ -135,7 +136,15 @@ ConnectionResult DronecodeSDKImpl::add_any_connection(const std::string &connect
             }
             return add_serial_connection(cli_arg.get_path(), baudrate);
         }
-
+#if USE_MTSERIAL
+        case CliArg::Protocol::MTSERIAL: {
+            int baudrate = DronecodeSDK::DEFAULT_SERIAL_BAUDRATE;
+            if (cli_arg.get_baudrate()) {
+                baudrate = cli_arg.get_baudrate();
+            }
+            return add_mtserial_connection(cli_arg.get_path(), baudrate);
+        }
+#endif
         default:
             return ConnectionResult::CONNECTION_ERROR;
     }
@@ -183,6 +192,22 @@ ConnectionResult DronecodeSDKImpl::add_serial_connection(const std::string &dev_
     }
     return ret;
 }
+
+#if USE_MTSERIAL
+ConnectionResult DronecodeSDKImpl::add_mtserial_connection(const std::string &dev_path, int baudrate)
+{
+    auto new_conn = std::make_shared<MTSerialConnection>(
+        std::bind(&DronecodeSDKImpl::receive_message, this, std::placeholders::_1),
+        dev_path,
+        baudrate);
+
+    ConnectionResult ret = new_conn->start();
+    if (ret == ConnectionResult::SUCCESS) {
+        add_connection(new_conn);
+    }
+    return ret;
+}
+#endif
 
 void DronecodeSDKImpl::add_connection(std::shared_ptr<Connection> new_connection)
 {

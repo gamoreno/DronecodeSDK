@@ -26,6 +26,9 @@ public:
     ConnectionResult add_udp_connection(const std::string &local_ip, int local_port_number);
     ConnectionResult add_tcp_connection(const std::string &remote_ip, int remote_port);
     ConnectionResult add_serial_connection(const std::string &dev_path, int baudrate);
+#if USE_MTSERIAL
+    ConnectionResult add_mtserial_connection(const std::string &dev_path, int baudrate);
+#endif
 
     std::vector<uint64_t> get_system_uuids() const;
     System &get_system();
