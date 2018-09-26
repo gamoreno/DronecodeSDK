@@ -2,13 +2,7 @@
 #include "global_include.h"
 #include "log.h"
 
-#if defined(LINUX)
-#include <unistd.h>
-#include <fcntl.h>
-#include <asm/termbits.h>
-#include <sys/ioctl.h>
-
-#elif defined(APPLE)
+#if defined(LINUX) || defined(APPLE)
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -78,6 +72,76 @@ ConnectionResult SerialConnection::start()
     return ConnectionResult::SUCCESS;
 }
 
+
+#if defined(LINUX)
+int baud2speed(int baudrate) {
+  int speed;
+
+  switch (baudrate) {
+  case 0:      speed = B0;      break;
+
+  case 50:     speed = B50;     break;
+
+  case 75:     speed = B75;     break;
+
+  case 110:    speed = B110;    break;
+
+  case 134:    speed = B134;    break;
+
+  case 150:    speed = B150;    break;
+
+  case 200:    speed = B200;    break;
+
+  case 300:    speed = B300;    break;
+
+  case 600:    speed = B600;    break;
+
+  case 1200:   speed = B1200;   break;
+
+  case 1800:   speed = B1800;   break;
+
+  case 2400:   speed = B2400;   break;
+
+  case 4800:   speed = B4800;   break;
+
+  case 9600:   speed = B9600;   break;
+
+  case 19200:  speed = B19200;  break;
+
+  case 38400:  speed = B38400;  break;
+
+  case 57600:  speed = B57600;  break;
+
+  case 115200: speed = B115200; break;
+
+  case 230400: speed = B230400; break;
+
+  case 460800: speed = B460800; break;
+
+  case 500000: speed = B500000; break;
+
+  case 921600: speed = B921600; break;
+
+  case 1000000: speed = B1000000; break;
+
+    #ifdef B1500000
+
+  case 1500000: speed = B1500000; break;
+    #endif
+
+    #ifdef B3000000
+
+  case 3000000: speed = B3000000; break;
+    #endif
+
+  default:
+    speed = -EINVAL;
+  }
+  
+  return speed;
+}
+#endif
+  
 ConnectionResult SerialConnection::setup_port()
 {
 #if defined(LINUX)
@@ -114,16 +178,7 @@ ConnectionResult SerialConnection::setup_port()
     }
 #endif
 
-#if defined(LINUX)
-    struct termios2 tc;
-    bzero(&tc, sizeof(tc));
-
-    if (ioctl(_fd, TCGETS2, &tc) == -1) {
-        LogErr() << "Could not get termios2 " << GET_ERROR();
-        close(_fd);
-        return ConnectionResult::CONNECTION_ERROR;
-    }
-#elif defined(APPLE)
+#if defined(LINUX) || defined(APPLE)
     struct termios tc;
     bzero(&tc, sizeof(tc));
 
@@ -134,39 +189,40 @@ ConnectionResult SerialConnection::setup_port()
     }
 #endif
 
-#if defined(LINUX) || defined(APPLE)
+#if defined(LINUX)
+    tc.c_oflag &= ~OCRNL;
+    cfmakeraw(&tc);
+#elif defined(APPLE)
     tc.c_iflag &= ~(IGNBRK | BRKINT | ICRNL | INLCR | PARMRK | INPCK | ISTRIP | IXON);
     tc.c_oflag &= ~(OCRNL | ONLCR | ONLRET | ONOCR | OFILL | OPOST);
     tc.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG | TOSTOP);
     tc.c_cflag &= ~(CSIZE | PARENB | CRTSCTS);
     tc.c_cflag |= CS8;
+#endif
 
+#if defined(LINUX) || defined(APPLE)
     tc.c_cc[VMIN] = 1; // We want at least 1 byte to be available.
     tc.c_cc[VTIME] = 0; // We don't timeout but wait indefinitely.
 #endif
 
 #if defined(LINUX)
-    // CBAUD and BOTHER don't seem to be available for macOS with termios.
-    tc.c_cflag &= ~(CBAUD);
-    tc.c_cflag |= BOTHER;
-
-    if (ioctl(_fd, TCSETS2, &tc) == -1) {
-        LogErr() << "Could not set terminal attributes " << GET_ERROR();
+    int speed = baud2speed(_baudrate);
+    if (speed == -EINVAL) {
+      LogErr() << "baudrate not supported";
         close(_fd);
         return ConnectionResult::CONNECTION_ERROR;
     }
 
-    if (ioctl(_fd, TCFLSH, TCIOFLUSH) == -1) {
-        LogErr() << "Could not flush terminal " << GET_ERROR();
-        close(_fd);
-        return ConnectionResult::CONNECTION_ERROR;
-    }
+    cfsetispeed(&tc, speed);
+    cfsetospeed(&tc, speed);
 #elif defined(APPLE)
     tc.c_cflag |= CLOCAL; // Without this a write() blocks indefinitely.
 
     cfsetispeed(&tc, _baudrate);
     cfsetospeed(&tc, _baudrate);
-
+#endif
+    
+#if defined(LINUX) || defined(APPLE)
     if (tcsetattr(_fd, TCSANOW, &tc) != 0) {
         LogErr() << "tcsetattr failed: " << GET_ERROR();
         close(_fd);
