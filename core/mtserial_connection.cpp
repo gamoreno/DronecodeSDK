@@ -123,7 +123,7 @@ void MTSerialConnection::receive()
 
     while (!_should_exit) {
         int recv_len = zsv_mtserial_recv(_schedfd, 0, buffer, sizeof(buffer));
-        if (recv_len < -1) {
+        if (recv_len < 0) {
             LogErr() << "read failure";
         }
         if (recv_len > static_cast<int>(sizeof(buffer)) || recv_len == 0) {
