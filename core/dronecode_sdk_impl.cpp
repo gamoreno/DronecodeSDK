@@ -83,12 +83,25 @@ void DronecodeSDKImpl::receive_message(const mavlink_message_t &message)
     }
 }
 
-bool DronecodeSDKImpl::send_message(const mavlink_message_t &message)
+#if USE_MTSERIAL
+bool DronecodeSDKImpl::send_message(const mavlink_message_t &message, int zsrm_reservation_id)
+#else
+bool DronecodeSDKImpl::send_message(const mavlink_message_t &message, int)
+#endif
 {
     std::lock_guard<std::mutex> lock(_connections_mutex);
 
     for (auto it = _connections.begin(); it != _connections.end(); ++it) {
-        if (!(**it).send_message(message)) {
+    	bool success = false;
+#if USE_MTSERIAL
+    	MTSerialConnection* mtserial_connection = dynamic_cast<MTSerialConnection*>(it->get());
+    	if (zsrm_reservation_id >= 0 && mtserial_connection) {
+    		success = mtserial_connection->send_message_finish(message, zsrm_reservation_id);
+    	} else
+#endif
+    		success = (**it).send_message(message);
+
+    	if (!success) {
             LogErr() << "send fail";
             return false;
         }

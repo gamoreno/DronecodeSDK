@@ -218,7 +218,7 @@ void OffboardImpl::send_velocity_ned()
         afz,
         yaw,
         yaw_rate);
-    _parent->send_message(message);
+    _parent->send_message(message, zsrm_reservation_id);
 }
 
 void OffboardImpl::send_velocity_body()
@@ -271,7 +271,7 @@ void OffboardImpl::send_velocity_body()
         afz,
         yaw,
         yaw_rate);
-    _parent->send_message(message);
+    _parent->send_message(message, zsrm_reservation_id);
 }
 
 void OffboardImpl::process_heartbeat(const mavlink_message_t &message)

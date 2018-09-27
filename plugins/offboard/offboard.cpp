@@ -80,7 +80,7 @@ bool dronecode_sdk::Offboard::is_using_send_finish() const
     return _impl->is_using_send_finish();
 }
 
-void dronecode_sdk::Offboard::set_using_send_finish(bool using_send_finish_value)
+void dronecode_sdk::Offboard::set_using_send_finish(int zsrm_reservation_id)
 {
-    _impl->set_using_send_finish(using_send_finish_value);
+    _impl->set_using_send_finish(zsrm_reservation_id);
 }

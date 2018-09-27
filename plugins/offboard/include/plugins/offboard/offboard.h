@@ -168,7 +168,7 @@ public:
 
     bool is_using_send_finish() const;
 
-    void set_using_send_finish(bool using_send_finish_value);
+    void set_using_send_finish(int zsrm_reservation_id);
 
 private:
     /** @private Underlying implementation, set at instantiation */

@@ -18,7 +18,14 @@ public:
     ~DronecodeSDKImpl();
 
     void receive_message(const mavlink_message_t &message);
-    bool send_message(const mavlink_message_t &message);
+
+    /**
+     * sends MAVLink message out through all the connections
+     * @param message message to send
+     * @param zsrm_reservation_id if >=0, and the connection is an MTSERIAL
+     * 	connection, it will use mtserial_send_finish for that reservation
+     */
+    bool send_message(const mavlink_message_t &message, int zsrm_reservation_id = -1);
 
     ConnectionResult add_any_connection(const std::string &connection_url);
     ConnectionResult

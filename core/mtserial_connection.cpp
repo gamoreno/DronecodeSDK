@@ -3,10 +3,10 @@
 #include "log.h"
 
 #include <unistd.h>
-#include <fcntl.h>
-#include <asm/termbits.h>
-#include <sys/ioctl.h>
+
+extern "C" {
 #include <zsrmvapi.h>
+}
 
 #define GET_ERROR() strerror(errno)
 
@@ -78,7 +78,15 @@ ConnectionResult MTSerialConnection::stop()
     return ConnectionResult::SUCCESS;
 }
 
-bool MTSerialConnection::send_message(const mavlink_message_t &message)
+bool MTSerialConnection::send_message(const mavlink_message_t &message) {
+	return send_message_impl(message);
+}
+
+bool MTSerialConnection::send_message_finish(const mavlink_message_t &message, int zsrm_reservation_id) {
+	return send_message_impl(message, zsrm_reservation_id);
+}
+
+bool MTSerialConnection::send_message_impl(const mavlink_message_t &message, int zsrm_reservation_id)
 {
     if (_serial_node.empty()) {
         LogErr() << "Dev Path unknown";
@@ -93,9 +101,14 @@ bool MTSerialConnection::send_message(const mavlink_message_t &message)
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     uint16_t buffer_len = mavlink_msg_to_send_buffer(buffer, &message);
 
-    int send_len = zsv_mtserial_send_finish(_schedfd, 0, buffer, buffer_len);
+    int send_status;
+    if (zsrm_reservation_id >= 0) {
+    	send_status = zsv_mtserial_send_finish(_schedfd, zsrm_reservation_id, buffer, buffer_len);
+    } else {
+    	send_status = zsv_mtserial_send(_schedfd, 0, buffer, buffer_len);
+    }
 
-    if (send_len != buffer_len) {
+    if (send_status != 1) {
         LogErr() << "write failure";
         return false;
     }

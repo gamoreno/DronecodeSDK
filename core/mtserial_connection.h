@@ -16,6 +16,7 @@ public:
     ~MTSerialConnection();
 
     bool send_message(const mavlink_message_t &message);
+    bool send_message_finish(const mavlink_message_t &message, int zsrm_reservation_id);
 
     // Non-copyable
     MTSerialConnection(const MTSerialConnection &) = delete;
@@ -33,6 +34,8 @@ private:
     int _schedfd = -1;
     std::thread *_recv_thread = nullptr;
     std::atomic_bool _should_exit{false};
+
+    bool send_message_impl(const mavlink_message_t &message, int zsrm_reservation_id = -1);
 };
 
 } // namespace dronecode_sdk

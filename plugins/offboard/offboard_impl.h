@@ -34,11 +34,11 @@ public:
 
     void send_velocity_ned(const Offboard::VelocityNEDYaw &velocity_ned_yaw);
 
-    bool is_using_send_finish() const { return using_send_finish; }
+    bool is_using_send_finish() const { return zsrm_reservation_id != -1; }
 
-    void set_using_send_finish(bool using_send_finish_value)
+    void set_using_send_finish(int zsrm_reservation_id_value)
     {
-        using_send_finish = using_send_finish_value;
+        zsrm_reservation_id = zsrm_reservation_id_value;
     }
 
 private:
@@ -58,7 +58,7 @@ private:
 
     void *_call_every_cookie = nullptr;
 
-    bool using_send_finish = false;
+    int zsrm_reservation_id = -1;
     const float SEND_INTERVAL_S = 0.1f;
 };
 

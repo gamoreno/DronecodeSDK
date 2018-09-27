@@ -401,12 +401,12 @@ void SystemImpl::send_heartbeat()
     send_message(message);
 }
 
-bool SystemImpl::send_message(const mavlink_message_t &message)
+bool SystemImpl::send_message(const mavlink_message_t &message, int zsrm_reservation_id)
 {
 #if MESSAGE_DEBUGGING == 1
     LogDebug() << "Sending msg " << size_t(message.msgid);
 #endif
-    return _parent.send_message(message);
+    return _parent.send_message(message, zsrm_reservation_id);
 }
 
 void SystemImpl::request_autopilot_version()
