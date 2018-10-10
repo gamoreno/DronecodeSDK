@@ -1,5 +1,6 @@
 #include "mavlink_receiver.h"
 #include "global_include.h"
+#include "log.h"
 
 #if DROP_DEBUG == 1
 #include <iomanip>
@@ -9,6 +10,10 @@ namespace dronecode_sdk {
 
 MAVLinkReceiver::MAVLinkReceiver(uint8_t channel) :
     _channel(channel)
+#if EXTRA_DEBUG
+    ,
+    _frame_error(false)
+#endif    
 #if DROP_DEBUG == 1
     ,
     _last_time()
@@ -28,8 +33,27 @@ void MAVLinkReceiver::set_new_datagram(char *datagram, unsigned datagram_len)
 bool MAVLinkReceiver::parse_message()
 {
     // Note that one datagram can contain multiple mavlink messages.
+#if EXTRA_DEBUG    
+    if (_datagram_len > 0) {
+        LogDebug() << "got datagram len=" << _datagram_len;
+    }
+#endif    
     for (unsigned i = 0; i < _datagram_len; ++i) {
-        if (mavlink_parse_char(_channel, _datagram[i], &_last_message, &_status) == 1) {
+#if EXTRA_DEBUG    
+        if ((_status.parse_state <= MAVLINK_PARSE_STATE_IDLE) && ((uint8_t*)_datagram)[i] != MAVLINK_STX) {
+            if (!_frame_error) {
+                _frame_error = true;
+                LogErr() << "Beginning of frame missing. instead got " << (int)_datagram[i];
+            }
+        }
+#endif
+
+#if EXTRA_DEBUG
+        uint8_t r = mavlink_frame_char(_channel, _datagram[i], &_last_message, &_status);
+#else
+        uint8_t r = mavlink_parse_char(_channel, _datagram[i], &_last_message, &_status);
+#endif        
+        if (r == 1) {
             // Move the pointer to the datagram forward by the amount parsed.
             _datagram += (i + 1);
             // And decrease the length, so we don't overshoot in the next round.
@@ -40,8 +64,18 @@ bool MAVLinkReceiver::parse_message()
 #endif
 
             // We have parsed one message, let's return so it can be handled.
+
+#if EXTRA_DEBUG
+            _frame_error = false;
+#endif
             return true;
         }
+#if EXTRA_DEBUG
+         else if (r > 1) {
+            LogDebug() << "bad CRC";
+            _frame_error = true;
+        }
+#endif
     }
 
     // No (more) messages, let's give up.
@@ -72,7 +106,8 @@ void MAVLinkReceiver::debug_drop_rate()
                 _bytes_at_camera_overall += sys_status.errors_count2;
                 _bytes_at_sdk_overall += _bytes_received;
 
-                _time_elapsed += elapsed_since_s(_last_time);
+                Time now;
+                _time_elapsed += now.elapsed_since_s(_last_time);
 
                 print_line("FMU   ",
                            sys_status.errors_comm,
@@ -98,7 +133,8 @@ void MAVLinkReceiver::debug_drop_rate()
         }
         _first = false;
 
-        _last_time = steady_time();
+        Time now;
+        _last_time = now.steady_time();
 
         // Reset afterwards:
         _bytes_received = msg_len;
@@ -113,7 +149,7 @@ void MAVLinkReceiver::print_line(const char *index,
 {
     LogDebug() << "count " << index << ": " << std::setw(6) << count << ", loss: " << std::setw(6)
                << count_total - count << ",  " << std::setw(6) << std::setprecision(2) << std::fixed
-               << 100.0 * float(count) / float(count_total) << " %, overall: " << std::setw(6)
+               << 100.0f * float(count) / float(count_total) << " %, overall: " << std::setw(6)
                << std::setprecision(2) << std::fixed
                << (100.0 * double(overall_bytes) / double(overall_bytes_total)) << " %, "
                << std::setw(6) << std::setprecision(2) << std::fixed

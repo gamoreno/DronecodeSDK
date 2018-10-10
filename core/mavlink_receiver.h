@@ -4,6 +4,8 @@
 #include "global_include.h"
 #include <cstdint>
 
+#define EXTRA_DEBUG 0
+
 namespace dronecode_sdk {
 
 class MAVLinkReceiver {
@@ -31,6 +33,9 @@ public:
 
 private:
     uint8_t _channel;
+#if EXTRA_DEBUG    
+    bool _frame_error;
+#endif    
     mavlink_message_t _last_message = {};
     mavlink_status_t _status = {};
     char *_datagram = nullptr;

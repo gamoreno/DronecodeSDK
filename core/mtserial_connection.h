@@ -9,8 +9,8 @@ namespace dronecode_sdk {
 class MTSerialConnection : public Connection {
 public:
     explicit MTSerialConnection(Connection::receiver_callback_t receiver_callback,
-                              const std::string &path,
-                              int baudrate);
+                                const std::string &path,
+                                int baudrate);
     ConnectionResult start();
     ConnectionResult stop();
     ~MTSerialConnection();
